@@ -28,6 +28,23 @@ final class PassController {
             }
     }
 
+    func getPass(_ req: Request) throws -> HTTPResponse {
+        let passType: String = try req.parameters.next()
+        var serialNumber: String = try req.parameters.next()
+
+        guard passType == .passType else { throw Abort(.badRequest) }
+
+        let fileExtension = ".pkpass"
+
+        if !serialNumber.hasSuffix(fileExtension) {
+            serialNumber += fileExtension
+        }
+
+        let path = WorkingDirectory.passes + serialNumber
+
+        return try req.fileio().chunkedResponse(file: path, for: req.http)
+    }
+
     /// Saves a decoded `PushAssociation` to the database.
     func create(_ req: Request, json: [String: String]) throws -> Future<Response> {
         let deviceID: String = try req.parameters.next()
