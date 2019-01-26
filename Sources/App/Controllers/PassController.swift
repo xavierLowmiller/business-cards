@@ -2,6 +2,7 @@ import Vapor
 
 private extension String {
     static let passType = "pass.de.adorsys.businesscard"
+    static let passKitHeader = "application/vnd.apple.pkpass"
 }
 
 final class PassController {
@@ -42,7 +43,10 @@ final class PassController {
 
         let path = WorkingDirectory.passes + serialNumber
 
-        return try req.fileio().chunkedResponse(file: path, for: req.http)
+        var res = try req.fileio().chunkedResponse(file: path, for: req.http)
+        res.headers.add(name: .contentType, value: .passKitHeader)
+        print(res)
+        return res
     }
 
     /// Saves a decoded `PushAssociation` to the database.
@@ -100,4 +104,15 @@ final class PassController {
             }
     }
 
+    func log(_ req: Request) throws -> HTTPResponse {
+        print(req.http.body)
+        var res = HTTPResponse(status: .ok)
+        res.headers.add(name: .contentType, value: "application/json")
+        return res
+    }
+
+    func redirect(_ req: Request) throws -> Response {
+        let serialNumber: String = try req.parameters.next()
+        return req.redirect(to: "/v1/passes/" + .passType + "/" + serialNumber)
+    }
 }
