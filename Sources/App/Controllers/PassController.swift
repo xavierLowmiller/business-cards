@@ -33,7 +33,7 @@ final class PassController {
         let deviceID: String = try req.parameters.next()
         let passType: String = try req.parameters.next()
         let passID: String = try req.parameters.next()
-        
+
         guard let pushID = json["pushToken"],
             passType == .passType
             else { throw Abort(.badRequest) }
@@ -60,6 +60,26 @@ final class PassController {
             }
             .flatMap { status in
                 req.response().encode(status: status, for: req)
+            }
+    }
+
+    func delete(_ req: Request) throws -> Future<Response> {
+        let deviceID: String = try req.parameters.next()
+        let passType: String = try req.parameters.next()
+        let passID: String = try req.parameters.next()
+
+        guard passType == .passType else { throw Abort(.badRequest) }
+
+        return PushAssociation.query(on: req)
+            .filter(\.deviceID, .equal, deviceID)
+            .filter(\.passType, .equal, .passType)
+            .filter(\.passID, .equal, passID)
+            .all()
+            .flatMap {
+                Future<Void>.andAll($0.map { $0.delete(on: req) }, eventLoop: req.eventLoop)
+            }
+            .map {
+                req.response()
             }
     }
 

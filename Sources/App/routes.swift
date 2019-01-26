@@ -13,4 +13,5 @@ public func routes(_ router: Router) throws {
     let passController = PassController()
     devices.post([String: String].self, at: String.parameter, use: passController.create)
     devices.get("/", use: passController.getPasses)
+    devices.delete(String.parameter, use: passController.delete)
 }
