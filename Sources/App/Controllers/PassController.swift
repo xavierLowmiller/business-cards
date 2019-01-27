@@ -43,9 +43,18 @@ final class PassController {
 
         let path = WorkingDirectory.passes + serialNumber
 
+        let attributes = try FileManager.default.attributesOfItem(atPath: path)
+        let lastModified = Date(rfc1123: (attributes[.modificationDate] as! Date).rfc1123)!
+
+        if let reqHeader = req.http.headers[.ifModifiedSince].first,
+            let ifModifiedSince = Date(rfc1123: reqHeader),
+            ifModifiedSince >= lastModified {
+            return HTTPResponse(status: .notModified)
+        }
+
         var res = try req.fileio().chunkedResponse(file: path, for: req.http)
         res.headers.add(name: .contentType, value: .passKitHeader)
-        print(res)
+        res.headers.add(name: .lastModified, value: lastModified.rfc1123)
         return res
     }
 
