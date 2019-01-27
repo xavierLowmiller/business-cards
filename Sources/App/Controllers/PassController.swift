@@ -16,16 +16,21 @@ final class PassController {
         let passType: String = try req.parameters.next()
         guard passType == .passType else { throw Abort(.badRequest) }
 
-        if let tag: String = try? req.query.get(at: "passesUpdatedSince") {
-            print(tag)
-        }
+        let tag: TimeInterval = (try? req.query.get(at: "passesUpdatedSince")) ?? 0
+        let timeStamp = Date(timeIntervalSince1970: tag)
 
         return PushAssociation.query(on: req)
             .filter(\.deviceID, .equal, deviceID)
+            .filter(\.creationDate, .greaterThan, timeStamp)
             .all()
-            .map {
-                let passIDs = $0.map { $0.passID }
-                return PushQueryResponse(lastUpdated: "", serialNumbers: passIDs)
+            .map { passes in
+                let latestTimeStamp = passes
+                    .map { $0.creationDate }
+                    .sorted()
+                    .last?
+                    .timeIntervalSince1970
+                let passIDs = passes.map { $0.passID }
+                return PushQueryResponse(lastUpdated: "\(latestTimeStamp ?? tag)", serialNumbers: passIDs)
             }
     }
 

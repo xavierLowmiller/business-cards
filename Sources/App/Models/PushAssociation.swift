@@ -9,12 +9,14 @@ struct PushAssociation: SQLiteModel {
     let pushID: String
     let passType: String
     let passID: String
+    let creationDate: Date
 
     init(deviceID: String, pushID: String, passType: String, passID: String) {
         self.deviceID = deviceID
         self.pushID = pushID
         self.passType = passType
         self.passID = passID
+        creationDate = Date()
     }
 }
 
