@@ -9,7 +9,7 @@ public func routes(_ router: Router) throws {
         "registrations",
         String.parameter
     )
-    // Example of configuring a controller
+
     let passController = PassController()
     devices.post([String: String].self, at: String.parameter, use: passController.create)
     devices.get("/", use: passController.getPasses)

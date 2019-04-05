@@ -1,3 +1,5 @@
+// Implements https://developer.apple.com/library/archive/documentation/PassKit/Reference/PassKit_WebService/WebService.html
+
 import Vapor
 
 private extension String {
