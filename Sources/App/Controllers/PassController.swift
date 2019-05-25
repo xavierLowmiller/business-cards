@@ -113,7 +113,7 @@ final class PassController {
             .filter(\.passID, .equal, passID)
             .all()
             .flatMap {
-                Future<Void>.andAll($0.map { $0.delete(on: req) }, eventLoop: req.eventLoop)
+                .andAll($0.map { $0.delete(on: req) }, eventLoop: req.eventLoop)
             }
             .map {
                 req.response()
