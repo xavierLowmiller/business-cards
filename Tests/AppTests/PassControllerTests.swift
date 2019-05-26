@@ -122,6 +122,8 @@ final class PassControllerTests: XCTestCase {
     }
 
     static let allTests = [
+        ("testLinuxTestSuiteIncludesAllTests",
+         testLinuxTestSuiteIncludesAllTests),
         ("testPostingAPushTokenShouldCreateAPushAssociationInTheDatabase",
          testPostingAPushTokenShouldCreateAPushAssociationInTheDatabase),
         ("testPostingAnExistingPushTokenShouldNotCreateAPushAssociationInTheDatabase",
@@ -133,6 +135,23 @@ final class PassControllerTests: XCTestCase {
         ("testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile",
          testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile)
     ]
+
+    // https://oleb.net/blog/2017/03/keeping-xctest-in-sync/ Thanks, Ole!
+    func testLinuxTestSuiteIncludesAllTests() {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        let thisClass = type(of: self)
+        let linuxCount = thisClass.allTests.count
+        #if swift(>=4.0)
+        let darwinCount = thisClass
+            .defaultTestSuite.testCaseCount
+        #else
+        let darwinCount = Int(thisClass
+            .defaultTestSuite().testCaseCount)
+        #endif
+        XCTAssertEqual(linuxCount, darwinCount,
+                       "\(darwinCount - linuxCount) tests are missing from allTests")
+        #endif
+    }
 }
 
 private extension String {
