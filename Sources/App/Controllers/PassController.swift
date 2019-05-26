@@ -5,6 +5,7 @@ import Vapor
 private extension String {
     static let passType = "pass.de.adorsys.businesscard"
     static let passKitHeader = "application/vnd.apple.pkpass"
+    static let applicationJsonHeader = "application/json"
 }
 
 final class PassController {
@@ -123,7 +124,7 @@ final class PassController {
     func log(_ req: Request) throws -> HTTPResponse {
         print(req.http.body)
         var res = HTTPResponse(status: .ok)
-        res.headers.add(name: .contentType, value: "application/json")
+        res.headers.add(name: .contentType, value: .applicationJsonHeader)
         return res
     }
 

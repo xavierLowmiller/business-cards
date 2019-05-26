@@ -63,19 +63,86 @@ final class PassControllerTests: XCTestCase {
         conn.close()
     }
 
+    func testGettingAPassShouldReturnAPkPassFile() throws {
+        // Given
+        let passID = "xlo"
+        let app = try Application.testing()
+        let conn = try app.newConnection(to: .sqlite).wait()
+        let responder = try app.make(Responder.self)
+        let url = URL(string: "/v1/passes/\(String.passType)/\(passID)")!
+        let request = HTTPRequest(url: url)
+
+        // When
+        let response = try responder.respond(to: .init(http: request, using: app)).wait()
+
+        // Then
+        XCTAssertEqual(response.http.status, .ok)
+        XCTAssertEqual(response.http.headers[.contentType], [.passKitHeader])
+        XCTAssertEqual(response.http.body.count, nil) // Means streaming
+        conn.close()
+    }
+
+    func testGettingAPassWithAIfModifiedSinceDateWithinRangeShouldReturnNotModfied() throws {
+        // Given
+        let passID = "xlo"
+        let app = try Application.testing()
+        let conn = try app.newConnection(to: .sqlite).wait()
+        let responder = try app.make(Responder.self)
+        let url = URL(string: "/v1/passes/\(String.passType)/\(passID)")!
+        let headers = HTTPHeaders([("If-Modified-Since", Date().rfc1123)])
+        let request = HTTPRequest(url: url, headers: headers)
+
+        // When
+        let response = try responder.respond(to: .init(http: request, using: app)).wait()
+
+        // Then
+        XCTAssertEqual(response.http.status, .notModified)
+        XCTAssertEqual(response.http.body.count, 0)
+        conn.close()
+    }
+
+    func testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile() throws {
+        // Given
+        let passID = "xlo"
+        let app = try Application.testing()
+        let conn = try app.newConnection(to: .sqlite).wait()
+        let responder = try app.make(Responder.self)
+        let url = URL(string: "/v1/passes/\(String.passType)/\(passID)")!
+        let headers = HTTPHeaders([("If-Modified-Since", Date.distantPast.rfc1123)])
+        let request = HTTPRequest(url: url, headers: headers)
+
+        // When
+        let response = try responder.respond(to: .init(http: request, using: app)).wait()
+
+        // Then
+        XCTAssertEqual(response.http.status, .ok)
+        XCTAssertEqual(response.http.headers[.contentType], [.passKitHeader])
+        XCTAssertEqual(response.http.body.count, nil) // Means streaming
+        conn.close()
+    }
+
     static let allTests = [
         ("testPostingAPushTokenShouldCreateAPushAssociationInTheDatabase",
-         testPostingAPushTokenShouldCreateAPushAssociationInTheDatabase)
+         testPostingAPushTokenShouldCreateAPushAssociationInTheDatabase),
+        ("testPostingAnExistingPushTokenShouldNotCreateAPushAssociationInTheDatabase",
+         testPostingAnExistingPushTokenShouldNotCreateAPushAssociationInTheDatabase),
+        ("testGettingAPassShouldReturnAPkPassFile",
+         testGettingAPassShouldReturnAPkPassFile),
+        ("testGettingAPassWithAIfModifiedSinceDateWithinRangeShouldReturnNotModfied",
+         testGettingAPassWithAIfModifiedSinceDateWithinRangeShouldReturnNotModfied),
+        ("testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile",
+         testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile)
     ]
 }
 
 private extension String {
     static let passType = "pass.de.adorsys.businesscard"
     static let passKitHeader = "application/vnd.apple.pkpass"
+    static let applicationJsonHeader = "application/json"
 }
 
 private extension HTTPHeaders {
     static let applicationJsonHeaders = HTTPHeaders([
-        ("Content-Type", "application/json")
-        ])
+        ("Content-Type", .applicationJsonHeader)
+    ])
 }
