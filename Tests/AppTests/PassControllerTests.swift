@@ -63,6 +63,39 @@ final class PassControllerTests: XCTestCase {
         conn.close()
     }
 
+    func testGettingIdentifiersShouldReturnAnArrayOfIdentifiersForADevice() throws {
+        // Given
+        let app = try Application.testing()
+        let conn = try app.newConnection(to: .sqlite).wait()
+        let deviceID = "12345"
+        let pushAssociations = try ["abc", "def"]
+            .map {
+                PushAssociation(deviceID: deviceID,
+                                pushID: "1",
+                                passType: .passType,
+                                passID: $0)
+            }
+            .map { try $0.save(on: conn).wait() }
+        let responder = try app.make(Responder.self)
+        var components = URLComponents(string: "/v1/devices/\(deviceID)/registrations/\(String.passType)")!
+        components.queryItems = [.init(name: "passesUpdatedSince", value: "0")]
+        let request = HTTPRequest(url: components.url!)
+        let lastUpdated = pushAssociations.map { $0.creationDate }.sorted().last
+        let expected = PassController.PushQueryResponse(
+            lastUpdated: "\(lastUpdated!.timeIntervalSince1970)",
+            serialNumbers: pushAssociations.map { $0.passID }
+        )
+
+        // When
+        let response = try responder.respond(to: .init(http: request, using: app)).wait()
+
+        // Then
+        XCTAssertEqual(response.http.status, .ok)
+        XCTAssertEqual(response.http.body.data,
+                       try! JSONEncoder().encode(expected))
+        conn.close()
+    }
+
     func testGettingAPassShouldReturnAPkPassFile() throws {
         // Given
         let passID = "xlo"
@@ -78,7 +111,7 @@ final class PassControllerTests: XCTestCase {
         // Then
         XCTAssertEqual(response.http.status, .ok)
         XCTAssertEqual(response.http.headers[.contentType], [.passKitHeader])
-        XCTAssertEqual(response.http.body.count, nil) // Means streaming
+        XCTAssertNil(response.http.body.count) // Means streaming
         conn.close()
     }
 
@@ -133,7 +166,9 @@ final class PassControllerTests: XCTestCase {
         ("testGettingAPassWithAIfModifiedSinceDateWithinRangeShouldReturnNotModfied",
          testGettingAPassWithAIfModifiedSinceDateWithinRangeShouldReturnNotModfied),
         ("testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile",
-         testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile)
+         testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile),
+        ("testGettingIdentifiersShouldReturnAnArrayOfIdentifiersForADevice",
+        testGettingIdentifiersShouldReturnAnArrayOfIdentifiersForADevice)
     ]
 
     // https://oleb.net/blog/2017/03/keeping-xctest-in-sync/ Thanks, Ole!
@@ -163,5 +198,5 @@ private extension String {
 private extension HTTPHeaders {
     static let applicationJsonHeaders = HTTPHeaders([
         ("Content-Type", .applicationJsonHeader)
-    ])
+        ])
 }
