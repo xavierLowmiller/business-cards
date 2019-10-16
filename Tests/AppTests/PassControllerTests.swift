@@ -168,7 +168,7 @@ final class PassControllerTests: XCTestCase {
         ("testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile",
          testGettingAPassWithAnOldIfModifiedSinceDateShouldReturnAPkPassFile),
         ("testGettingIdentifiersShouldReturnAnArrayOfIdentifiersForADevice",
-        testGettingIdentifiersShouldReturnAnArrayOfIdentifiersForADevice)
+         testGettingIdentifiersShouldReturnAnArrayOfIdentifiersForADevice)
     ]
 
     // https://oleb.net/blog/2017/03/keeping-xctest-in-sync/ Thanks, Ole!
@@ -198,5 +198,5 @@ private extension String {
 private extension HTTPHeaders {
     static let applicationJsonHeaders = HTTPHeaders([
         ("Content-Type", .applicationJsonHeader)
-        ])
+    ])
 }

@@ -45,7 +45,7 @@ final class PassController {
             }
             .flatMap { status in
                 req.response().encode(status: status, for: req)
-        }
+            }
     }
 
     func getPasses(_ req: Request) throws -> Future<PushQueryResponse> {
